@@ -32,6 +32,9 @@ class IndexController extends Controller
         usort($array, function($a, $b) {
             return $a['time'] < $b['time'];
         });
+        usort($array, function($a, $b) {
+            return $a['id'] < $b['id'] && $a['time'] == $b['time'];
+        });
         $first = array_first($array);
         $result = [
             "id" => $first['id'] ?? null,
