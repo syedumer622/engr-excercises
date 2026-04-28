@@ -11,7 +11,7 @@ class IndexController extends Controller
     {
         return response()->json(compact('success', 'data', 'error'));
     }
-    public function index(Request $request) // exercise = 1
+    public function artworkVersion(Request $request) // exercise = 1
     {
         $validator = validator($request->all(), [
             'input' => 'required|array',
@@ -38,6 +38,35 @@ class IndexController extends Controller
         $first = array_first($array);
         $result = [
             "id" => $first['id'] ?? null,
+        ];
+        return $this->sendResponse(true, $result);
+    }
+
+    public function tierPricing(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.quantity' => 'required',
+            'input.tiers' => 'required|array',
+            'input.tiers.*.min' => 'required|int',
+            'input.tiers.*.price' => 'required|numeric'
+        ], [
+            'input.array' => 'The input field must be an object.'
+        ]);
+
+        if($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+        $quantity = $request->input('input.quantity');
+        $tiers = $request->collect('input.tiers');
+        $selectedTier = $tiers->first();
+        $tiers->each(function($value) use ($quantity, &$selectedTier) {
+            if($quantity >= $value['min'] && $selectedTier['min'] <= $value['min']) {
+                $selectedTier = $value;
+            }
+        });
+        $result = [
+            'price' => $selectedTier['price']
         ];
         return $this->sendResponse(true, $result);
     }
