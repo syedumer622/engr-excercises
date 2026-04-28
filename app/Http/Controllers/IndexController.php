@@ -48,7 +48,7 @@ class IndexController extends Controller
             'input' => 'required|array',
             'input.quantity' => 'required',
             'input.tiers' => 'required|array',
-            'input.tiers.*.min' => 'required|int',
+            'input.tiers.*.min' => 'required|int|distinct',
             'input.tiers.*.price' => 'required|numeric'
         ], [
             'input.array' => 'The input field must be an object.'
@@ -59,12 +59,10 @@ class IndexController extends Controller
         }
         $quantity = $request->input('input.quantity');
         $tiers = $request->collect('input.tiers');
-        $selectedTier = $tiers->first();
-        $tiers->each(function($value) use ($quantity, &$selectedTier) {
-            if($quantity >= $value['min'] && $selectedTier['min'] <= $value['min']) {
-                $selectedTier = $value;
-            }
-        });
+        $selectedTier = $tiers->sortByDesc('min')->where('min', '<=', $quantity)->first();
+        if(!$selectedTier) {
+            return $this->sendResponse(false, null, 'There is no tier applied against the input value.');
+        }
         $result = [
             'price' => $selectedTier['price']
         ];
