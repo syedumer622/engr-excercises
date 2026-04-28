@@ -61,7 +61,7 @@ class IndexController extends Controller
         $tiers = $request->collect('input.tiers');
         $selectedTier = $tiers->sortByDesc('min')->where('min', '<=', $quantity)->first();
         if(!$selectedTier) {
-            return $this->sendResponse(false, null, 'There is no tier applied against the input value.');
+            return $this->sendResponse(false, null, 'There is no tier applied against the input quantity.');
         }
         $result = [
             'price' => $selectedTier['price']
