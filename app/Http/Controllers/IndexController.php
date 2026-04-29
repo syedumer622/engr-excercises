@@ -87,7 +87,7 @@ class IndexController extends Controller
         $invalid_items = $input->filter(function($value) {
             return $value['required'] == true && $value['done'] == false;
         })->values();
-        $invalid_item_ids = $invalid_items->pluck('id')->unique('id')->toArray();
+        $invalid_item_ids = $invalid_items->pluck('id')->toArray();
         $isValid = $invalid_items->count() < 1;
 
         return $this->sendResponse(true, [
