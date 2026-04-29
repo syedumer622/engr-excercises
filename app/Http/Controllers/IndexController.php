@@ -73,7 +73,7 @@ class IndexController extends Controller
     {
         $validator = validator($request->all(), [
             'input' => 'required|array',
-            'input.*.id' => 'required|int',
+            'input.*.id' => 'required|int|distinct',
             'input.*.required' => 'required|boolean',
             'input.*.done' => 'required|boolean'
         ]);
