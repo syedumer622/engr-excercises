@@ -68,4 +68,31 @@ class IndexController extends Controller
         ];
         return $this->sendResponse(true, $result);
     }
+
+    public function cartValidator(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.*.id' => 'required|int',
+            'input.*.required' => 'required|boolean',
+            'input.*.done' => 'required|boolean'
+        ]);
+
+        if($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+
+        $input = $request->collect('input');
+
+        $invalid_items = $input->filter(function($value) {
+            return $value['required'] == true && $value['done'] == false;
+        })->values();
+        $invalid_item_ids = $invalid_items->unique('id')->pluck('id')->toArray();
+        $isValid = $invalid_items->count() < 1;
+
+        return $this->sendResponse(true, [
+            'valid' => $isValid,
+            'invalid_items' => $invalid_item_ids
+        ]);
+    }
 }
