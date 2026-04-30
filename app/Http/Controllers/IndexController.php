@@ -103,7 +103,7 @@ class IndexController extends Controller
             'input.order_qty' => 'required|integer|min:1',
             'input.vendors' => 'required|array',
             'input.vendors.*.id' => 'required|integer|numeric:strict|min:1',
-            'input.vendors.*.stock' => 'required|integer|numeric:strict|min:1',
+            'input.vendors.*.stock' => 'required|integer|numeric:strict|min:0',
         ]);
         if($validator->fails()) {
             return $this->sendResponse(false, null, $validator->errors()->first());
