@@ -110,26 +110,16 @@ class IndexController extends Controller
         }
         $order_qty = $request->input('input.order_qty');
         $vendors = $request->collect('input.vendors');
-        $total_vendors = $vendors->count();
-        $qty_per_vendor = ceil($order_qty / $total_vendors);
-        $lastIndex = $total_vendors - 1;
         $remaining_qty = $order_qty;
-        $vendors_allocation = $vendors->map(function ($vendor, $key) use($qty_per_vendor, &$remaining_qty, $lastIndex) {
-            $allocated_qty = $qty_per_vendor > $vendor['stock'] ? $vendor['stock'] : $qty_per_vendor;
+        $vendors_allocation = $vendors->map(function ($vendor) use(&$remaining_qty) {
+            $allocated_qty = $remaining_qty > $vendor['stock'] ? $vendor['stock'] : $remaining_qty;
             $remaining_qty -= $allocated_qty;
-
-            if ($key == $lastIndex) {
-                $allocated_qty += $remaining_qty;
-                if($allocated_qty > $vendor['stock']) {
-                    $allocated_qty = $vendor['stock'];
-                }
-            }
 
             return [
                 'vendor_id' => $vendor['id'],
                 'allocated' => $allocated_qty,
             ];
-        });
+        })->where('allocated', '>', 0)->values();
 
         $error = null;
         $is_qty_exceeded = $order_qty > $vendors->sum('stock');
