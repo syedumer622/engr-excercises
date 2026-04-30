@@ -95,4 +95,48 @@ class IndexController extends Controller
             'invalid_items' => $invalid_item_ids
         ]);
     }
+
+    public function vendorAllocation(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.order_qty' => 'required|integer|min:1',
+            'input.vendors' => 'required|array',
+            'input.vendors.*.id' => 'required|integer|numeric:strict|min:1',
+            'input.vendors.*.stock' => 'required|integer|numeric:strict|min:1',
+        ]);
+        if($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+        $order_qty = $request->input('input.order_qty');
+        $vendors = $request->collect('input.vendors');
+        $total_vendors = $vendors->count();
+        $qty_per_vendor = ceil($order_qty / $total_vendors);
+        $lastIndex = $total_vendors - 1;
+        $remaining_qty = $order_qty;
+        $vendors_allocation = $vendors->map(function ($vendor, $key) use($qty_per_vendor, &$remaining_qty, $lastIndex) {
+            $allocated_qty = $qty_per_vendor > $vendor['stock'] ? $vendor['stock'] : $qty_per_vendor;
+            $remaining_qty -= $allocated_qty;
+
+            if ($key == $lastIndex) {
+                $allocated_qty += $remaining_qty;
+                if($allocated_qty > $vendor['stock']) {
+                    $allocated_qty = $vendor['stock'];
+                }
+            }
+
+            return [
+                'vendor_id' => $vendor['id'],
+                'allocated' => $allocated_qty,
+            ];
+        });
+
+        $error = null;
+        $is_qty_exceeded = $order_qty > $vendors->sum('stock');
+        if($is_qty_exceeded) {
+            $error = 'Input total quantity exceeds the available quantity, placing the order with the quantity available.';
+        }
+
+        return $this->sendResponse(true, $vendors_allocation, $error);
+    }
 }
