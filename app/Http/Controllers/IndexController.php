@@ -21,7 +21,7 @@ class IndexController extends Controller
             'input.*.time|integer'
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return $this->sendResponse(false, null, $validator->errors()->first());
         }
         $input = $request->input('input');
@@ -29,10 +29,10 @@ class IndexController extends Controller
             return $value['approved'] == true && $value['rejected'] == false;
         });
         $array = array_values($array);
-        usort($array, function($a, $b) {
+        usort($array, function ($a, $b) {
             return $a['time'] < $b['time'];
         });
-        usort($array, function($a, $b) {
+        usort($array, function ($a, $b) {
             return $a['id'] < $b['id'] && $a['time'] == $b['time'];
         });
         $first = array_first($array);
@@ -54,13 +54,13 @@ class IndexController extends Controller
             'input.array' => 'The input field must be an object.'
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return $this->sendResponse(false, null, $validator->errors()->first());
         }
         $quantity = $request->input('input.quantity');
         $tiers = $request->collect('input.tiers');
         $selectedTier = $tiers->sortByDesc('min')->where('min', '<=', $quantity)->first();
-        if(!$selectedTier) {
+        if (!$selectedTier) {
             return $this->sendResponse(false, null, 'There is no tier applied against the input quantity.');
         }
         $result = [
@@ -78,13 +78,13 @@ class IndexController extends Controller
             'input.*.done' => 'required|boolean'
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return $this->sendResponse(false, null, $validator->errors()->first());
         }
 
         $input = $request->collect('input');
 
-        $invalid_items = $input->filter(function($value) {
+        $invalid_items = $input->filter(function ($value) {
             return $value['required'] == true && $value['done'] == false;
         })->values();
         $invalid_item_ids = $invalid_items->pluck('id')->toArray();
@@ -105,13 +105,13 @@ class IndexController extends Controller
             'input.vendors.*.id' => 'required|integer|numeric:strict|min:1',
             'input.vendors.*.stock' => 'required|integer|numeric:strict|min:0',
         ]);
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return $this->sendResponse(false, null, $validator->errors()->first());
         }
         $order_qty = $request->input('input.order_qty');
         $vendors = $request->collect('input.vendors');
         $remaining_qty = $order_qty;
-        $vendors_allocation = $vendors->map(function ($vendor) use(&$remaining_qty) {
+        $vendors_allocation = $vendors->map(function ($vendor) use (&$remaining_qty) {
             $allocated_qty = $remaining_qty > $vendor['stock'] ? $vendor['stock'] : $remaining_qty;
             $remaining_qty -= $allocated_qty;
 
@@ -123,7 +123,7 @@ class IndexController extends Controller
 
         $error = null;
         $is_qty_exceeded = $order_qty > $vendors->sum('stock');
-        if($is_qty_exceeded) {
+        if ($is_qty_exceeded) {
             $error = 'Input total quantity exceeds the available quantity, placing the order with the quantity available.';
         }
 
@@ -137,10 +137,24 @@ class IndexController extends Controller
             'input.price' => 'required|numeric:strict|min:0',
             'input.discounts' => 'required|array',
             'input.discounts.*.type' => 'required|in:flat,percentage',
-            'input.discounts.*.value' => 'required|numeric:strict|min:0',
+            'input.discounts.*.value' => [
+                'required',
+                'numeric:strict',
+                'min:0',
+                function ($attribute, $value, $fail) use ($request) {
+                    // Extract the index to find the matching 'type'
+                    // input.discounts.0.value -> 0
+                    $index = explode('.', $attribute)[2];
+                    $type = $request->input("input.discounts.{$index}.type");
+
+                    if ($type === 'percentage' && $value > 100) {
+                        $fail("The discount percentage cannot exceed 100.");
+                    }
+                },
+            ],
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return $this->sendResponse(false, null, $validator->errors()->first());
         }
 
@@ -149,9 +163,9 @@ class IndexController extends Controller
 
         $discounts = $request->collect('input.discounts');
 
-        foreach($discounts as $discount) {
+        foreach ($discounts as $discount) {
             $final_price = $discount['type'] == 'percentage' ? ($input_price - ($input_price * ($discount['value'] / 100))) : ($input_price - $discount['value']);
-            if($final_price < $lowest_price) {
+            if ($final_price < $lowest_price) {
                 $lowest_price = $final_price;
             }
         }
