@@ -137,7 +137,7 @@ class IndexController extends Controller
             'input.price' => 'required|numeric:strict|min:0',
             'input.discounts' => 'required|array',
             'input.discounts.*.type' => 'required|in:flat,percentage',
-            'input.discounts.*.value' => 'required|numeric:strict|min:0|required_if:type,percentage|max:100',
+            'input.discounts.*.value' => 'required|numeric:strict|min:0',
         ]);
 
         if($validator->fails()) {
