@@ -171,7 +171,7 @@ class IndexController extends Controller
         }
 
         $result = [
-            'final_price' => $lowest_price
+            'final_price' => $lowest_price > 0 ? $lowest_price : 0,
         ];
 
         return $this->sendResponse(true, $result);
