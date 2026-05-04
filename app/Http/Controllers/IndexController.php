@@ -129,4 +129,37 @@ class IndexController extends Controller
 
         return $this->sendResponse(true, $vendors_allocation, $error);
     }
+
+    public function discountSelection(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.price' => 'required|numeric:strict',
+            'input.discounts' => 'required|array',
+            'input.discounts.*.type' => 'required|in:flat,percentage',
+            'input.discounts.*.value' => 'required|numeric:strict',
+        ]);
+
+        if($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+
+        $input_price = $request->input('input.price');
+        $lowest_price = $input_price;
+
+        $discounts = $request->collect('input.discounts');
+
+        foreach($discounts as $discount) {
+            $final_price = $discount['type'] == 'percentage' ? ($input_price - ($input_price * ($discount['value'] / 100))) : ($input_price - $discount['value']);
+            if($final_price < $lowest_price) {
+                $lowest_price = $final_price;
+            }
+        }
+
+        $result = [
+            'final_price' => $lowest_price
+        ];
+
+        return $this->sendResponse(true, $result);
+    }
 }
