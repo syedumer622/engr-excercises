@@ -176,4 +176,48 @@ class IndexController extends Controller
 
         return $this->sendResponse(true, $result);
     }
+
+    private function isDependsOnExists($steps, $currentStep, $currentKey)
+    {
+        foreach($steps as $key => $step) {
+            if ($step['id'] == $currentStep['depends_on'] && $key <= $currentKey) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function approvalFlow(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.steps' => 'required|array',
+            'input.steps.*.id' => 'required|string|distinct',
+            'input.steps.*.depends_on' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+
+        $steps = $request->collect('input.steps');
+
+        $valid = true;
+        foreach($steps as $key => $step) {
+            if(isset($step['depends_on'])) {
+                if($step['id'] == $step['depends_on']) {
+                    $valid = false;
+                } else {
+                    $exists = $this->isDependsOnExists($steps, $step, $key);
+                    if (!$exists) {
+                        $valid = false;
+                    }
+                }
+            }
+        }
+        $result = [
+            'valid' => $valid,
+        ];
+        return $this->sendResponse(true, $result);
+    }
 }
