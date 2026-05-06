@@ -220,4 +220,32 @@ class IndexController extends Controller
         ];
         return $this->sendResponse(true, $result);
     }
+
+    public function inventoryReservationEngine(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.stock' => 'required|integer|numeric:strict',
+            'input.requests' => 'required|array',
+            'input.requests.*' => 'required|integer'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+
+        $stock = $request->input('input.stock');
+        $remaining_stock = $stock;
+        $requests = $request->collect('input.requests');
+
+        $result = $requests->map(function($value) use (&$remaining_stock) {
+            if ($value <= $remaining_stock) {
+                $remaining_stock -= $value;
+                return true;
+            }
+            return false;
+        });
+
+        return $this->sendResponse(true, $result);
+    }
 }
