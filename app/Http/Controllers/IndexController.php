@@ -225,7 +225,7 @@ class IndexController extends Controller
     {
         $validator = validator($request->all(), [
             'input' => 'required|array',
-            'input.stock' => 'required|integer|numeric:strict|min:1',
+            'input.stock' => 'required|integer|numeric:strict',
             'input.requests' => 'required|array',
             'input.requests.*' => 'required|integer|min:1'
         ]);
