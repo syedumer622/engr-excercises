@@ -15,3 +15,4 @@ Route::post('/exercise-4-vendor-allocation', [IndexController::class, 'vendorAll
 Route::post('/exercise-5-discount', [IndexController::class, 'discountSelection']); // exercise = 5
 Route::post('/exercise-6-approval-flow', [IndexController::class, 'approvalFlow']); // exercise = 6
 Route::post('/exercise-7-inventory', [IndexController::class, 'inventoryReservationEngine']); // exercise = 7
+Route::post('/exercise-8-shipment', [IndexController::class, 'partialShipmentTracker']); // exercise = 8

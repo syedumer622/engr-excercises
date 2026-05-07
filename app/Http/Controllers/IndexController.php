@@ -248,4 +248,32 @@ class IndexController extends Controller
 
         return $this->sendResponse(true, $result);
     }
+
+    public function partialShipmentTracker(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.ordered' => 'required|integer|numeric:strict|min:1',
+            'input.shipped' => 'required|array',
+            'input.shipped.*' => 'required|integer|numeric:strict|min:0'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+
+        $ordered_qty = $request->input('input.ordered');
+        $shipped = $request->collect('input.shipped');
+        $total_shipped = $shipped->sum();
+        if($total_shipped > $ordered_qty) {
+            return $this->sendResponse(false, null, 'The total shipped quantity must not exceed the ordered quantity.');
+        }
+        $remaining_qty = $ordered_qty - $total_shipped;
+
+        $result = [
+            'remaining' => $remaining_qty,
+        ];
+
+        return $this->sendResponse(true, $result);
+    }
 }
