@@ -16,3 +16,4 @@ Route::post('/exercise-5-discount', [IndexController::class, 'discountSelection'
 Route::post('/exercise-6-approval-flow', [IndexController::class, 'approvalFlow']); // exercise = 6
 Route::post('/exercise-7-inventory', [IndexController::class, 'inventoryReservationEngine']); // exercise = 7
 Route::post('/exercise-8-shipment', [IndexController::class, 'partialShipmentTracker']); // exercise = 8
+Route::post('/exercise-9-webhook', [IndexController::class, 'webhookDeduplicator']); // exercise = 9

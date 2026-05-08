@@ -179,7 +179,7 @@ class IndexController extends Controller
 
     private function isDependsOnExists($steps, $currentStep, $currentKey)
     {
-        foreach($steps as $key => $step) {
+        foreach ($steps as $key => $step) {
             if ($step['id'] == $currentStep['depends_on'] && $key <= $currentKey) {
                 return true;
             }
@@ -203,9 +203,9 @@ class IndexController extends Controller
         $steps = $request->collect('input.steps');
 
         $valid = true;
-        foreach($steps as $key => $step) {
-            if(isset($step['depends_on'])) {
-                if($step['id'] == $step['depends_on']) {
+        foreach ($steps as $key => $step) {
+            if (isset($step['depends_on'])) {
+                if ($step['id'] == $step['depends_on']) {
                     $valid = false;
                 } else {
                     $exists = $this->isDependsOnExists($steps, $step, $key);
@@ -238,7 +238,7 @@ class IndexController extends Controller
         $remaining_stock = $stock;
         $requests = $request->collect('input.requests');
 
-        $result = $requests->map(function($value) use (&$remaining_stock) {
+        $result = $requests->map(function ($value) use (&$remaining_stock) {
             if ($value <= $remaining_stock) {
                 $remaining_stock -= $value;
                 return true;
@@ -265,7 +265,7 @@ class IndexController extends Controller
         $ordered_qty = $request->input('input.ordered');
         $shipped = $request->collect('input.shipped');
         $total_shipped = $shipped->sum();
-        if($total_shipped > $ordered_qty) {
+        if ($total_shipped > $ordered_qty) {
             return $this->sendResponse(false, null, 'The total shipped quantity must not exceed the ordered quantity.');
         }
         $remaining_qty = $ordered_qty - $total_shipped;
@@ -275,5 +275,23 @@ class IndexController extends Controller
         ];
 
         return $this->sendResponse(true, $result);
+    }
+
+    public function webhookDeduplicator(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.*.id' => 'required|string',
+            'input.*.time' => 'required|integer|numeric:strict|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+
+        $input = $request->collect('input');
+        $unique_values = $input->unique('id')->pluck('id')->toArray();
+
+        return $this->sendResponse(true, $unique_values);
     }
 }
