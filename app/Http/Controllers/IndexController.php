@@ -282,7 +282,7 @@ class IndexController extends Controller
         $validator = validator($request->all(), [
             'input' => 'required|array',
             'input.*.id' => 'required|string',
-            'input.*.time' => 'required|integer|numeric:strict|min:1'
+            'input.*.time' => 'required|integer:strict|min:1'
         ]);
 
         if ($validator->fails()) {
