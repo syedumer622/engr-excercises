@@ -301,7 +301,7 @@ class IndexController extends Controller
         $validator = validator($request->all(), [
             'input' => 'required|array',
             'input.created_at' => 'required|date|before_or_equal:input.current_date',
-            'input.valid_days' => 'required|integer:strict|min:1',
+            'input.valid_days' => 'required|integer:strict|min:0',
             'input.current_date' => 'required|date|before_or_equal:today',
         ]);
 
