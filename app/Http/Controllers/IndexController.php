@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller
@@ -293,5 +294,26 @@ class IndexController extends Controller
         $unique_values = $input->unique('id')->pluck('id')->toArray();
 
         return $this->sendResponse(true, $unique_values);
+    }
+
+    public function queryExpiryEngine(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.created_at' => 'required|date|before_or_equal:input.current_date',
+            'input.valid_days' => 'required|integer:strict|min:1',
+            'input.current_date' => 'required|date|before_or_equal:today',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, null, $validator->errors()->first());
+        }
+
+        $currentDate = $request->date('input.current_date', 'Y-m-d');
+        $createdAt = $request->date('input.created_at', 'Y-m-d');
+        $validDays = $request->input('input.valid_days');
+
+        $valid = $createdAt->diffInDays($currentDate) <= $validDays;
+        return $this->sendResponse(true, compact('valid'));
     }
 }

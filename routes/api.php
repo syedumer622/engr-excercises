@@ -17,3 +17,4 @@ Route::post('/exercise-6-approval-flow', [IndexController::class, 'approvalFlow'
 Route::post('/exercise-7-inventory', [IndexController::class, 'inventoryReservationEngine']); // exercise = 7
 Route::post('/exercise-8-shipment', [IndexController::class, 'partialShipmentTracker']); // exercise = 8
 Route::post('/exercise-9-webhook', [IndexController::class, 'webhookDeduplicator']); // exercise = 9
+Route::post('exercise-10-quote-expiry', [IndexController::class, 'queryExpiryEngine']); // exercise = 10
