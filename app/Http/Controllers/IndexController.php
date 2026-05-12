@@ -317,12 +317,18 @@ class IndexController extends Controller
         return $this->sendResponse(true, compact('valid'));
     }
 
+    private function tagsExists($array, $tags) {
+        return collect($array)->filter(function($value) use($tags) {
+            return in_array($value, $tags);
+        })->values()->count() > 0;
+    }
+
     public function productVisibilityEngine(Request $request)
     {
         $validator = validator($request->all(), [
             'input' => 'required|array',
             'input.customer' => 'required|array',
-            'input.customer.tags' => 'required|array',
+            'input.customer.tags' => 'present|array',
             'input.products' => 'required|array',
             'input.products.*.id' => 'required|integer|distinct',
             'input.products.*.allow' => 'present|array',
@@ -337,20 +343,25 @@ class IndexController extends Controller
 
         $tags = $request->collect('input.customer.tags');
         $products = $request->collect('input.products');
-        $result = [];
 
-        foreach($tags as $tag) {
-            $bothAllowAndBlock = $products->filter(function($product) use ($tag) {
-                return in_array($tag, $product['allow'] ?? []) && in_array($tag, $product['block'] ?? []);
-            })->first();
-            if($bothAllowAndBlock) {
-                return $this->sendResponse(false, null, 'Allow and block cannot have the same values for a single product');
+        $visibleProducts = $products->filter(function ($product) use ($tags) {
+            $allowed = $this->tagsExists($product['allow'], $tags->toArray());
+            $blocked = $this->tagsExists($product['block'], $tags->toArray());
+            if(empty($product['allow']) && empty($product['block'])) {
+                return true;
             }
-            $result[$tag] = $products->filter(function($product) use ($tag) {
-                return in_array($tag, $product['allow']);
-            })->values()->pluck('id')->toArray();
-        }
+            if(empty($product['allow']) && !$blocked) {
+                return true;
+            }
+            if($blocked) {
+                return false;
+            }
+            if($allowed) {
+                return true;
+            }
+            return false;
+        })->values()->pluck('id');
 
-        return $this->sendResponse(true, $result);
+        return $this->sendResponse(true, $visibleProducts);
     }
 }
