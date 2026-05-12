@@ -316,4 +316,33 @@ class IndexController extends Controller
         $valid = $createdAt->diffInDays($currentDate) <= $validDays;
         return $this->sendResponse(true, compact('valid'));
     }
+
+    public function productVisibilityEngine(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.customer' => 'required|array',
+            'input.customer.tags' => 'required|array',
+            'input.products' => 'required|array',
+            'input.products.*.id' => 'required|integer|distinct',
+            'input.products.*.allow' => 'nullable|array',
+            'input.products.*.block' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, $validator->errors()->first());
+        }
+
+        $tags = $request->collect('input.customer.tags');
+        $products = $request->collect('input.products');
+        $result = [];
+
+        foreach($tags as $tag) {
+            $result[$tag] = $products->filter(function($product) use ($tag) {
+                return in_array($tag, $product['allow']);
+            })->values()->pluck('id')->toArray();
+        }
+
+        return $this->sendResponse(true, $result);
+    }
 }
