@@ -325,19 +325,27 @@ class IndexController extends Controller
             'input.customer.tags' => 'required|array',
             'input.products' => 'required|array',
             'input.products.*.id' => 'required|integer|distinct',
-            'input.products.*.allow' => 'nullable|array',
-            'input.products.*.block' => 'nullable|array',
+            'input.products.*.allow' => 'present|array',
+            'input.products.*.block' => 'present|array',
         ]);
 
         if ($validator->fails()) {
             return $this->sendResponse(false, $validator->errors()->first());
         }
 
+
+
         $tags = $request->collect('input.customer.tags');
         $products = $request->collect('input.products');
         $result = [];
 
         foreach($tags as $tag) {
+            $bothAllowAndBlock = $products->filter(function($product) use ($tag) {
+                return in_array($tag, $product['allow'] ?? []) && in_array($tag, $product['block'] ?? []);
+            })->first();
+            if($bothAllowAndBlock) {
+                return $this->sendResponse(false, null, 'Allow and block cannot have the same values for a single product');
+            }
             $result[$tag] = $products->filter(function($product) use ($tag) {
                 return in_array($tag, $product['allow']);
             })->values()->pluck('id')->toArray();
