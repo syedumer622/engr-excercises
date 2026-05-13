@@ -19,3 +19,4 @@ Route::post('/exercise-8-shipment', [IndexController::class, 'partialShipmentTra
 Route::post('/exercise-9-webhook', [IndexController::class, 'webhookDeduplicator']); // exercise = 9
 Route::post('exercise-10-quote-expiry', [IndexController::class, 'queryExpiryEngine']); // exercise = 10
 Route::post('exercise-11-product-visibility', [IndexController::class, 'productVisibilityEngine']); // exercise = 11
+Route::post('exercise-12-bundle-pricing', [IndexController::class, 'bundlePricingEngine']); // exercise = 12

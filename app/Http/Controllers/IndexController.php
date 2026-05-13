@@ -361,4 +361,30 @@ class IndexController extends Controller
 
         return $this->sendResponse(true, $visibleProducts);
     }
+
+    public function bundlePricingEngine(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required',
+            'input.items' => 'required|array',
+            'input.items.*.id' => 'required|integer:strict',
+            'input.items.*.price' => 'required|numeric:strict',
+            'input.bundle_price' => 'required|numeric:strict',
+            'input.apply_bundle' => 'required|boolean:strict'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, $validator->errors()->first());
+        }
+
+        $apply_bundle = $request->boolean('input.apply_bundle');
+        $bundle_price = $request->input('input.bundle_price');
+        $items_price = $request->collect('input.items')->sum('price');
+
+        $total_applied_price = $items_price;
+        if($apply_bundle && $bundle_price < $items_price) {
+            $total_applied_price = $bundle_price;
+        }
+        return $this->sendResponse(true, $total_applied_price);
+    }
 }
