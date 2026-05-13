@@ -381,10 +381,10 @@ class IndexController extends Controller
         $bundle_price = $request->input('input.bundle_price');
         $items_price = $request->collect('input.items')->sum('price');
 
-        $total_applied_price = $items_price;
+        $final_price = $items_price;
         if($apply_bundle && $bundle_price < $items_price) {
-            $total_applied_price = $bundle_price;
+            $final_price = $bundle_price;
         }
-        return $this->sendResponse(true, $total_applied_price);
+        return $this->sendResponse(true, compact('final_price'));
     }
 }
