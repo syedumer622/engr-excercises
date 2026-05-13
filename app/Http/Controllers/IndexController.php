@@ -347,9 +347,6 @@ class IndexController extends Controller
         $visibleProducts = $products->filter(function ($product) use ($tags) {
             $allowed = $this->tagsExists($product['allow'], $tags->toArray());
             $blocked = $this->tagsExists($product['block'], $tags->toArray());
-            if(empty($product['allow']) && empty($product['block'])) {
-                return true;
-            }
             if(empty($product['allow']) && !$blocked) {
                 return true;
             }
