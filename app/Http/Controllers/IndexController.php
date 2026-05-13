@@ -370,7 +370,7 @@ class IndexController extends Controller
             'input.items.*.id' => 'required|integer:strict|min:1',
             'input.items.*.price' => 'required|numeric:strict|min:0',
             'input.bundle_price' => 'required|numeric:strict|min:0',
-            'input.apply_bundle' => 'required|boolean:strict:min:0'
+            'input.apply_bundle' => 'required|boolean:strict'
         ]);
 
         if ($validator->fails()) {
