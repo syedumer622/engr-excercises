@@ -367,10 +367,10 @@ class IndexController extends Controller
         $validator = validator($request->all(), [
             'input' => 'required',
             'input.items' => 'required|array',
-            'input.items.*.id' => 'required|integer:strict',
-            'input.items.*.price' => 'required|numeric:strict',
-            'input.bundle_price' => 'required|numeric:strict',
-            'input.apply_bundle' => 'required|boolean:strict'
+            'input.items.*.id' => 'required|integer:strict|min:1',
+            'input.items.*.price' => 'required|numeric:strict|min:0',
+            'input.bundle_price' => 'required|numeric:strict|min:0',
+            'input.apply_bundle' => 'required|boolean:strict:min:0'
         ]);
 
         if ($validator->fails()) {
