@@ -387,4 +387,56 @@ class IndexController extends Controller
         }
         return $this->sendResponse(true, compact('final_price'));
     }
+
+    private function findIdInArray(&$array, $id) {
+        foreach($array as $key => $value) {
+            if($value['id'] == $id) {
+                return $key;
+            }
+        }
+        return null;
+    }
+
+    public function cartMergeEngine(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.guest' => 'present|array',
+            'input.guest.*.id' => 'required|integer:strict|min:1',
+            'input.guest.*.qty' => 'required|integer:strict|min:1',
+            'input.user' => 'present|array',
+            'input.user.*.id' => 'required|integer:strict|min:1',
+            'input.user.*.qty' => 'required|integer:strict|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, $validator->errors()->first());
+        }
+
+        $user_cart_items = $request->collect('input.user')->toArray();
+        $guest_cart_items = $request->collect('input.guest')->toArray();
+        $result = [];
+
+        foreach($guest_cart_items as $guest_cart_item) {
+            $user_cart_items[] = $guest_cart_item;
+        }
+
+        foreach($user_cart_items as $user_cart_item) {
+            $key = $this->findIdInArray($result, $user_cart_item['id']);
+            if(!isset($key)) {
+                $result[] = $user_cart_item;
+            } else {
+                $result[$key]['qty'] += $user_cart_item['qty'];
+            }
+        }
+
+        usort($result, function ($a, $b) {
+            if($a['id'] == $b['id']) {
+                return 0;
+            }
+            return ($a['id'] < $b['id']) ? -1 : 1;
+        });
+
+        return $this->sendResponse(true, $result);
+    }
 }
