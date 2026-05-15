@@ -21,3 +21,4 @@ Route::post('/exercise-10-quote-expiry', [IndexController::class, 'queryExpiryEn
 Route::post('/exercise-11-product-visibility', [IndexController::class, 'productVisibilityEngine']); // exercise = 11
 Route::post('/exercise-12-bundle-pricing', [IndexController::class, 'bundlePricingEngine']); // exercise = 12
 Route::post('/exercise-13-cart-merge', [IndexController::class, 'cartMergeEngine']); // exercise = 13
+Route::post('/exercise-14-upsell', [IndexController::class, 'numberIndices']); // exercise = 14

@@ -317,8 +317,9 @@ class IndexController extends Controller
         return $this->sendResponse(true, compact('valid'));
     }
 
-    private function tagsExists($array, $tags) {
-        return collect($array)->filter(function($value) use($tags) {
+    private function tagsExists($array, $tags)
+    {
+        return collect($array)->filter(function ($value) use ($tags) {
             return in_array($value, $tags);
         })->values()->count() > 0;
     }
@@ -347,13 +348,13 @@ class IndexController extends Controller
         $visibleProducts = $products->filter(function ($product) use ($tags) {
             $allowed = $this->tagsExists($product['allow'], $tags->toArray());
             $blocked = $this->tagsExists($product['block'], $tags->toArray());
-            if(empty($product['allow']) && !$blocked) {
+            if (empty($product['allow']) && !$blocked) {
                 return true;
             }
-            if($blocked) {
+            if ($blocked) {
                 return false;
             }
-            if($allowed) {
+            if ($allowed) {
                 return true;
             }
             return false;
@@ -382,15 +383,16 @@ class IndexController extends Controller
         $items_price = $request->collect('input.items')->sum('price');
 
         $final_price = $items_price;
-        if($apply_bundle && $bundle_price < $items_price) {
+        if ($apply_bundle && $bundle_price < $items_price) {
             $final_price = $bundle_price;
         }
         return $this->sendResponse(true, compact('final_price'));
     }
 
-    private function findIdInArray(&$array, $id) {
-        foreach($array as $key => $value) {
-            if($value['id'] == $id) {
+    private function findIdInArray(&$array, $id)
+    {
+        foreach ($array as $key => $value) {
+            if ($value['id'] == $id) {
                 return $key;
             }
         }
@@ -417,13 +419,13 @@ class IndexController extends Controller
         $guest_cart_items = $request->collect('input.guest')->toArray();
         $result = [];
 
-        foreach($guest_cart_items as $guest_cart_item) {
+        foreach ($guest_cart_items as $guest_cart_item) {
             $user_cart_items[] = $guest_cart_item;
         }
 
-        foreach($user_cart_items as $user_cart_item) {
+        foreach ($user_cart_items as $user_cart_item) {
             $key = $this->findIdInArray($result, $user_cart_item['id']);
-            if(!isset($key)) {
+            if (!isset($key)) {
                 $result[] = $user_cart_item;
             } else {
                 $result[$key]['qty'] += $user_cart_item['qty'];
@@ -431,12 +433,85 @@ class IndexController extends Controller
         }
 
         usort($result, function ($a, $b) {
-            if($a['id'] == $b['id']) {
+            if ($a['id'] == $b['id']) {
                 return 0;
             }
             return ($a['id'] < $b['id']) ? -1 : 1;
         });
 
         return $this->sendResponse(true, $result);
+    }
+
+    private function isTargetFirstAndLast($array, $target)
+    {
+        if (count($array) < 2) {
+            return false;
+        }
+        if ($array[0] + $array[(count($array) - 1)] == $target) {
+            return true;
+        }
+        return false;
+    }
+
+    private function isConsistantGap($array)
+    {
+        if (count($array) < 2) {
+            return false;
+        }
+        $initialDiff = $array[1] - $array[0];
+        foreach ($array as $key => $value) {
+            if ($key < count($array) - 1 && ($array[$key + 1] - $value) != $initialDiff) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function numberIndices(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.nums' => 'required|array',
+            'input.nums.*' => 'required|integer:strict',
+            'input.target' => 'required|integer:strict',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, $validator->errors()->first());
+        }
+
+        $nume = $request->collect('input.nums');
+        $target = $request->input('input.target');
+
+
+        $indexes = collect([]);
+        if (
+            $indexes->count() < 1 &&
+            !$this->isConsistantGap($nume->toArray()) &&
+            !$this->isTargetFirstAndLast($nume->toArray(), $target)
+        ) {
+            foreach ($nume as $key => $val) {
+                if ($key < $nume->count() - 1 && $val + ($nume[$key + 1]) == $target) {
+                    $indexes->push($key, $key + 1);
+                    break;
+                }
+            }
+        }
+        if ($indexes->count() < 1) {
+            foreach ($nume as $key => $val) {
+                foreach ($nume as $key2 => $val2) {
+                    if (($val + $val2) == $target && $key2 > $key) {
+                        $indexes->push($key, $key2);
+                        break;
+                    }
+                }
+                if ($indexes->count() > 1) {
+                    break;
+                }
+            }
+        }
+
+
+        return $this->sendResponse(true, $indexes);
     }
 }
