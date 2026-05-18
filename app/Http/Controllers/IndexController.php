@@ -543,7 +543,7 @@ class IndexController extends Controller
             return (isset($rule['max_weight']) && $weight > 0 && $weight <= $rule['max_weight']) ||
                 (isset($rule['country']) && $rule['country'] == $country) ||
                 (isset($rule['method']) && $rule['method'] == $method);
-        })->sortByDesc('priority')->first();
+        })->sortBy('priority')->first();
 
         $shipping_method = data_get($selected_rule, 'method');
         return $this->sendResponse(true, compact('shipping_method'));
