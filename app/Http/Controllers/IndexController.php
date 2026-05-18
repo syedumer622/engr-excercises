@@ -537,26 +537,12 @@ class IndexController extends Controller
         $method = $request->input('input.order.method');
 
         $rules = $request->collect('input.rules');
-        $maxMatchingRule = 0;
 
         $selected_rule = $rules->filter(function ($rule) use ($weight, $country, $method, &$maxMatchingRule) {
-            $totalMatched = 0;
-            if((isset($rule['max_weight']) && $weight > 0 && $weight <= $rule['max_weight'])) {
-                $totalMatched++;
-            }
-            if(isset($rule['country']) && $rule['country'] == $country) {
-                $totalMatched++;
-            }
-            if((isset($rule['method']) && $rule['method'] == $method)) {
-                $totalMatched++;
-            }
-            if($totalMatched > $maxMatchingRule) {
-                $maxMatchingRule = $totalMatched;
-                $totalMatched = 0;
-                return true;
-            }
-            return false;
-        })->sortBy('priority')->first();
+            return (isset($rule['max_weight']) && $weight > 0 && $weight <= $rule['max_weight']) ||
+                (isset($rule['country']) && $rule['country'] == $country) ||
+                (isset($rule['method']) && $rule['method'] == $method);
+        })->sortByDesc('priority')->first();
 
         return $this->sendResponse(true, $selected_rule);
     }
