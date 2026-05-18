@@ -514,4 +514,50 @@ class IndexController extends Controller
 
         return $this->sendResponse(true, $indexes);
     }
+
+    public function shippingRuleEngine(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'input' => 'required|array',
+            'input.order' => 'required',
+            'input.order.weight' => 'nullable|numeric:strict',
+            'input.order.country' => 'nullable|string',
+            'method.order.method' => 'nullable|string',
+            'input.rules' => 'required|array',
+            'input.rules.*.id' => 'required|integer:strict',
+            'input.rules.*.priority' => 'nullable|integer:strict|distinct',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendResponse(false, $validator->errors()->first());
+        }
+
+        $weight = $request->input('input.order.weight');
+        $country = $request->input('input.order.country');
+        $method = $request->input('input.order.method');
+
+        $rules = $request->collect('input.rules');
+        $maxMatchingRule = 0;
+
+        $selected_rule = $rules->filter(function ($rule) use ($weight, $country, $method, &$maxMatchingRule) {
+            $totalMatched = 0;
+            if((isset($rule['max_weight']) && $weight > 0 && $weight <= $rule['max_weight'])) {
+                $totalMatched++;
+            }
+            if(isset($rule['country']) && $rule['country'] == $country) {
+                $totalMatched++;
+            }
+            if((isset($rule['method']) && $rule['method'] == $method)) {
+                $totalMatched++;
+            }
+            if($totalMatched > $maxMatchingRule) {
+                $maxMatchingRule = $totalMatched;
+                $totalMatched = 0;
+                return true;
+            }
+            return false;
+        })->sortBy('priority')->first();
+
+        return $this->sendResponse(true, $selected_rule);
+    }
 }
