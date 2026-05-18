@@ -525,6 +525,7 @@ class IndexController extends Controller
             'method.order.method' => 'nullable|string',
             'input.rules' => 'required|array',
             'input.rules.*.id' => 'required|integer:strict',
+            'input.rules.*.method' => 'required|string',
             'input.rules.*.priority' => 'nullable|integer:strict|distinct',
         ]);
 
@@ -544,6 +545,7 @@ class IndexController extends Controller
                 (isset($rule['method']) && $rule['method'] == $method);
         })->sortByDesc('priority')->first();
 
-        return $this->sendResponse(true, $selected_rule);
+        $shipping_method = data_get($selected_rule, 'method');
+        return $this->sendResponse(true, compact('shipping_method'));
     }
 }
